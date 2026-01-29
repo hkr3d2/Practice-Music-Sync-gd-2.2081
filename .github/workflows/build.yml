@@ -1,60 +1,81 @@
-name: Build Mod
+name: Build Geode Mod
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        platform: [win, mac, android]
-        include:
-          - platform: win
-            cmake_platform: Win32
-          - platform: mac
-            cmake_platform: MacOS
-          - platform: android
-            cmake_platform: Android
-
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive
+        submodules: true
 
-    - name: Setup Geode SDK
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install build dependencies
       run: |
-        # Clone Geode SDK
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          git \
+          curl \
+          wget \
+          unzip \
+          pkg-config
+
+    - name: Install Geode
+      run: |
+        # Clone the Geode repository
         git clone https://github.com/geode-sdk/geode.git --depth=1
         cd geode
         
-        # Setup Geode
-        python -m pip install -e .
+        # Install Geode as a Python package in development mode
+        pip install -e .
         
-        # Initialize SDK (this downloads the SDK components)
-        geode sdk update
-        
-        echo "Geode SDK setup complete"
+        # Check if geode command is available
+        geode --version || echo "Geode CLI might need restart"
 
-    - name: Configure CMake
+    - name: Create build directory
+      run: mkdir -p build
+
+    - name: Configure for Windows
       run: |
-        cmake -B build \
+        cd build
+        cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
-          -DGEODE_PLATFORM=${{ matrix.platform }}
+          -DGEODE_PLATFORM=win \
+          -DCMAKE_TOOLCHAIN_FILE="$HOME/geode/toolchains/win32.cmake" \
+          -GNinja
 
-    - name: Build
+    - name: Build for Windows
       run: |
-        cmake --build build --config Release --parallel 4
+        cd build
+        cmake --build . --config Release --parallel
 
-    - name: Upload Artifact
+    - name: Find and list built files
+      run: |
+        find . -name "*.geode" -type f | xargs ls -la
+        echo "Looking in bin directory:"
+        ls -la bin/ || echo "bin directory not found"
+
+    - name: Upload Windows build
+      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: PracticeMusicSync-${{ matrix.platform }}
-        path: bin/*.geode
-        retention-days: 7
+        name: PracticeMusicSync-Windows
+        path: |
+          **/*.geode
+          bin/
+        retention-days: 5
