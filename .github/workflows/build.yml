@@ -5,14 +5,21 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch:
 
 jobs:
   build:
     strategy:
       matrix:
         platform: [win, mac, android]
-    
+        include:
+          - platform: win
+            cmake_platform: Win32
+          - platform: mac
+            cmake_platform: MacOS
+          - platform: android
+            cmake_platform: Android
+
     runs-on: ubuntu-latest
     
     steps:
@@ -21,41 +28,33 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install Geode CLI
+    - name: Setup Geode SDK
       run: |
-        pip install geode-sdk
-
-    - name: Initialize Geode SDK
-      run: |
-        geode sdk install
+        # Clone Geode SDK
+        git clone https://github.com/geode-sdk/geode.git --depth=1
+        cd geode
+        
+        # Setup Geode
+        python -m pip install -e .
+        
+        # Initialize SDK (this downloads the SDK components)
+        geode sdk update
+        
+        echo "Geode SDK setup complete"
 
     - name: Configure CMake
       run: |
         cmake -B build \
           -DCMAKE_BUILD_TYPE=Release \
-          -DGEODE_PLATFORM=${{ matrix.platform }} \
-          -DCMAKE_INSTALL_PREFIX=./install
+          -DGEODE_PLATFORM=${{ matrix.platform }}
 
     - name: Build
-      run: cmake --build build --config Release --parallel
-
-    - name: Package
       run: |
-        # Package the mod
-        cmake --install build --config Release --prefix ./package
-        
-        # Find the .geode file
-        find . -name "*.geode" -type f | head -1
-        
+        cmake --build build --config Release --parallel 4
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PracticeMusicSync-${{ matrix.platform }}
-        path: |
-          **/*.geode
+        path: bin/*.geode
         retention-days: 7
