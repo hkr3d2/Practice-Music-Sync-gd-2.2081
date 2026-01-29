@@ -5,24 +5,15 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:  # Allow manual triggers
 
 jobs:
   build:
     strategy:
       matrix:
-        platform: [windows, macos, android]
-        include:
-          - platform: windows
-            os: windows-latest
-            build-type: win
-          - platform: macos
-            os: macos-latest
-            build-type: mac
-          - platform: android
-            os: ubuntu-latest
-            build-type: android
+        platform: [win, mac, android]
     
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
@@ -30,25 +21,41 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup Geode SDK
-      uses: geode-sdk/setup-geode@v1
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        version: nightly
+        python-version: '3.11'
+
+    - name: Install Geode CLI
+      run: |
+        pip install geode-sdk
+
+    - name: Initialize Geode SDK
+      run: |
+        geode sdk install
 
     - name: Configure CMake
       run: |
         cmake -B build \
           -DCMAKE_BUILD_TYPE=Release \
-          -DGEODE_PLATFORM=${{ matrix.build-type }}
+          -DGEODE_PLATFORM=${{ matrix.platform }} \
+          -DCMAKE_INSTALL_PREFIX=./install
 
     - name: Build
-      run: cmake --build build --config Release
+      run: cmake --build build --config Release --parallel
 
+    - name: Package
+      run: |
+        # Package the mod
+        cmake --install build --config Release --prefix ./package
+        
+        # Find the .geode file
+        find . -name "*.geode" -type f | head -1
+        
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PracticeMusicSync-${{ matrix.platform }}
         path: |
-          bin/*.geode
-          bin/*.log
+          **/*.geode
         retention-days: 7
