@@ -1,81 +1,37 @@
-name: Build Geode Mod
+name: Build
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install build dependencies
+    - uses: actions/checkout@v4
+    
+    - name: Setup
       run: |
+        # Install basic tools
         sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          cmake \
-          ninja-build \
-          git \
-          curl \
-          wget \
-          unzip \
-          pkg-config
-
-    - name: Install Geode
-      run: |
-        # Clone the Geode repository
-        git clone https://github.com/geode-sdk/geode.git --depth=1
-        cd geode
+        sudo apt-get install -y cmake ninja-build g++ git
         
-        # Install Geode as a Python package in development mode
-        pip install -e .
+        # Get Geode
+        git clone https://github.com/geode-sdk/geode.git geode-sdk --depth=1
+        cd geode-sdk
         
-        # Check if geode command is available
-        geode --version || echo "Geode CLI might need restart"
-
-    - name: Create build directory
-      run: mkdir -p build
-
-    - name: Configure for Windows
+        # The Geode SDK is actually a CMake project, not a Python package
+        # The correct way is to use it as a CMake subdirectory
+        
+    - name: Build with CMake
       run: |
-        cd build
-        cmake .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DGEODE_PLATFORM=win \
-          -DCMAKE_TOOLCHAIN_FILE="$HOME/geode/toolchains/win32.cmake" \
-          -GNinja
-
-    - name: Build for Windows
-      run: |
-        cd build
-        cmake --build . --config Release --parallel
-
-    - name: Find and list built files
-      run: |
-        find . -name "*.geode" -type f | xargs ls -la
-        echo "Looking in bin directory:"
-        ls -la bin/ || echo "bin directory not found"
-
-    - name: Upload Windows build
-      if: success()
-      uses: actions/upload-artifact@v4
+        # Create symbolic link to geode-sdk in your project root
+        ln -s $(pwd)/geode-sdk geode
+        
+        mkdir -p build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j4
+        
+    - uses: actions/upload-artifact@v4
       with:
-        name: PracticeMusicSync-Windows
-        path: |
-          **/*.geode
-          bin/
-        retention-days: 5
+        name: mod-build
+        path: build/*.geode
