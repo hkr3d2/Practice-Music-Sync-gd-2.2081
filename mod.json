@@ -1,0 +1,28 @@
+{
+    "geode": "v5.0.0-alpha.1",
+    "id": "exal.practice-music-sync",
+    "name": "Practice Music Sync",
+    "version": "1.0.0",
+    "developer": "YourName",
+    "description": "Unlocks music sync in practice mode",
+    "repository": "https://github.com/yourusername/practice-music-sync",
+    "issues": {
+        "url": "https://github.com/yourusername/practice-music-sync/issues"
+    },
+    "dependencies": [
+        {
+            "id": "geode.loader",
+            "version": ">=v5.0.0-alpha.1",
+            "importance": "required"
+        }
+    ],
+    "tags": ["quality-of-life", "gameplay"],
+    "api": {
+        "include": [
+            "PlayLayer.hpp",
+            "GameStatsManager.hpp",
+            "GameManager.hpp"
+        ]
+    },
+    "incompatibilities": []
+}
