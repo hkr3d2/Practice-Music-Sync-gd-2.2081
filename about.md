@@ -1,6 +1,6 @@
 # Practice Music Sync Mod
 
-This mod enables music synchronization in practice mode for Geometry Dash v5.0.0-alpha.1.
+This mod enables music synchronization in practice mode for Geometry Dash 2.2081
 
 ## Features
 - Music plays normally in practice mode
@@ -11,5 +11,5 @@ This mod enables music synchronization in practice mode for Geometry Dash v5.0.0
 The mod patches the game's internal functions that disable music sync in practice mode, allowing it to function normally.
 
 ## Compatibility
-- Geometry Dash v5.0.0-alpha.1
+- Geometry Dash v2.2081
 - Requires Geode Loader v5.0.0-alpha.1 or newer
