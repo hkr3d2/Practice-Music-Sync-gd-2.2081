@@ -1,0 +1,54 @@
+name: Build Mod
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [windows, macos, android]
+        include:
+          - platform: windows
+            os: windows-latest
+            build-type: win
+          - platform: macos
+            os: macos-latest
+            build-type: mac
+          - platform: android
+            os: ubuntu-latest
+            build-type: android
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Geode SDK
+      uses: geode-sdk/setup-geode@v1
+      with:
+        version: nightly
+
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DGEODE_PLATFORM=${{ matrix.build-type }}
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PracticeMusicSync-${{ matrix.platform }}
+        path: |
+          bin/*.geode
+          bin/*.log
+        retention-days: 7
