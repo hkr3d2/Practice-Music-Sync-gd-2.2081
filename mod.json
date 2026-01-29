@@ -3,11 +3,11 @@
     "id": "exal.practice-music-sync",
     "name": "Practice Music Sync",
     "version": "1.0.0",
-    "developer": "YourName",
+    "developer": "Hkr3d2",
     "description": "Unlocks music sync in practice mode",
-    "repository": "https://github.com/yourusername/practice-music-sync",
+    "repository": "https://github.com/hkr3d2/practice-music-sync",
     "issues": {
-        "url": "https://github.com/yourusername/practice-music-sync/issues"
+        "url": "https://github.com/hkr3d2/practice-music-sync/issues"
     },
     "dependencies": [
         {
@@ -24,5 +24,13 @@
             "GameManager.hpp"
         ]
     },
-    "incompatibilities": []
+    "incompatibilities": [],
+    "settings": {
+        "enabled": {
+            "title": "Enable Mod",
+            "description": "Toggle the entire mod",
+            "type": "bool",
+            "default": true
+        }
+    }
 }
